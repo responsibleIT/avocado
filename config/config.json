@@ -1,0 +1,11 @@
+{
+    "detectionType": "gestures",
+    "modelPath" : {
+        "gestures" : "models/gestures/gesture_recognizer.task",
+        "objects"  : "models/objects/efficientdet_lite0.tflite"
+    },
+    "rules" : {
+        "gestures" : [],
+        "objects"  : []
+    }
+}

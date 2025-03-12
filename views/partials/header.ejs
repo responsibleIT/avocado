@@ -1,0 +1,16 @@
+<header>
+    <nav>
+        <ul>
+            <li><a href="/">Run</a></li>
+            <li><a href="/config">Detection Rules</a></li>
+            <% if(userName) { %>
+                <li><a href="/logout">Logout</a></li>
+            <% } else { %> 
+                <li><a href="/login">Login</a></li>
+            <% } %> 
+        </ul>
+    </nav>
+    <% if(userName) { %>
+        <p>Welkom <%= userName %></p>
+    <% } %> 
+</header>
