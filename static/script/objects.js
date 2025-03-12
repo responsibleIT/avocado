@@ -147,7 +147,7 @@ function displayVideoDetections(result) {
         const categoryName = detection.categories[0].categoryName
 
         for (const rule of config.rules.objects) {
-            if (rule.object == categoryName) {
+            if (rule.label== categoryName) {
                 if (rule.outputType == 'text') {
                     outputText += rule.output + " "
                 }

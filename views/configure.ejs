@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>Configure Detection Rules</title>
     <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
     <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-
     <script>const config = <%- config %> </script>
+    <script>const gestureLabels = <%- gestureLabels %> </script>
+    <script>const objectLabels = <%- objectLabels %> </script>
     <link href="./css/styles.css" rel="stylesheet">
 </head>
 
@@ -16,19 +17,28 @@
 
 <main>
     <h1>Please update your configuration and then save it</h1>
+    <% if(saved){ %>
+        <p class="message">Your configuration was saved</p>
+    <% } %>  
 
-    <form action="config" method="post">
-        <p>
+    <form id="configForm" action="config" method="post">
+        <input id="configInput" name="configTXT" type="hidden">
+        <section>
             Detection type:<br>
-            <label for="gestures">Gestures</label>
-            <input name="detectionType" id="gestures" type="radio" value="gestures" <% if(detectionType == 'gestures') { %> checked <% } %> > 
-            <label for="Objects">Objects</label>
-            <input name="detectionType" id="objects" type="radio" value="objects" <% if(detectionType == 'objects') { %> checked <% } %> >
-        </p>
-
-        <input type="submit" value="Save">
+            <input name="detectionType" id="gestureDetection" type="radio" value="gestures" <% if(detectionType == 'gestures') { %> checked <% } %> > 
+            <label for="gestureDetection">Gestures</label><br>
+            <input name="detectionType" id="objectDetection" type="radio" value="objects" <% if(detectionType == 'objects') { %> checked <% } %> >
+            <label for="objectDetection">Objects</label><br>
+        </section>
+        <section id="formContents" class="hidden">
+        </section>
+        <section id="formButtons" class="hidden">
+            <button id="addRuleButton" type="button">Add rule</button>
+            <input type="submit" value="Save">
+        </section>
 
     </form>
 </main>
+<script src="./script/formBuilder.js"></script>
 </body>
 </html>

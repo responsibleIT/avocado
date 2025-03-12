@@ -56,8 +56,20 @@ function initUserDir (userDir) {
             })
         })
 
-        console.log('Directories created successfully!')
+        console.log('New user drectories created: ' + userDir )
     })
+}
+
+function convertLabelFile(labels) {
+    let labelString = '['
+    const allLabels = labels.split("\n")
+    for (l of allLabels) {
+        labelString += "'" + l + "',"
+    }
+    labelString = labelString.substring(0, labelString.length - 1);
+    labelString += ']'
+
+    return labelString
 }
 
 // routes
@@ -78,7 +90,26 @@ app.get('/config', isAuthenticated, (req, res) => {
     const configTXT = fs.readFileSync(configFile, 'utf8');
     config = JSON.parse(configTXT)
 
-    res.render('configure.ejs', {userName: req.session.userName, config: configTXT, detectionType: config.detectionType})
+    const objectLabelFile = path.join(userDir, process.env.DIR_MODELS, 'objects', config.modelPath.objects.substring(config.modelPath.objects.lastIndexOf('/') + 1) + '.labels.txt')
+    const objectLabels = fs.readFileSync(objectLabelFile, 'utf8');
+    var objectLabelsTXT = convertLabelFile(objectLabels)
+
+    const gestureLabelFile = path.join(userDir, process.env.DIR_MODELS, 'gestures', config.modelPath.gestures.substring(config.modelPath.gestures.lastIndexOf('/') + 1) + '.labels.txt')
+    const gestureLabels = fs.readFileSync(gestureLabelFile, 'utf8');
+    var gestureLabelsTXT = convertLabelFile(gestureLabels)
+
+
+    const saved = xss(req.query.saved)
+    res.render('configure.ejs', {saved: saved, userName: req.session.userName, config: configTXT, detectionType: config.detectionType, objectLabels: objectLabelsTXT, gestureLabels: gestureLabelsTXT})
+})
+
+app.post('/config', isAuthenticated, (req, res) => {
+    const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
+    
+    fs.writeFileSync(configFile, req.body.configTXT, 'utf8');
+
+    res.redirect("/config?saved=true")
 })
 
 app.get('/login', (req, res) => {
@@ -88,19 +119,17 @@ app.get('/login', (req, res) => {
   
 app.post('/login', async (req, res) => {
 
-    const myUser = users.users.find(x => x.name === req.body.name)
-    if (myUser && myUser.password === req.body.password) {
+    const myUser = users.users.find(x => x.name === xss(req.body.name))
+    if (myUser && myUser.password === xss(req.body.password)) {
 
         // check if a directory for this user's data already exists, otherwise create it and it's subdirectories
         const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(myUser.name, {lower: true}) )
         try {
             await fs.promises.access(userDir)
         } catch (error) {
-            console.log("Dir doesnt exist")
             initUserDir(userDir)
             // wait a bit for the filesystem to finish
             await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Created")
         }
 
         // save userName in session
@@ -115,7 +144,7 @@ app.post('/login', async (req, res) => {
         })
 
     } else {
-        res.redirect("login?error=true")
+        res.redirect("/login?error=true")
     }
     
 })

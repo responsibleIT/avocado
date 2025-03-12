@@ -25,13 +25,13 @@ nav ul {
   display: flex;
   list-style-type: none;
   justify-content: space-around;
-  align-items: center;
   padding-left: 0;
 }
 
 nav ul li {
   display: block;
   width: 6em;
+  height: 3em;
   background-color: skyblue;
   border: 1px solid royalblue;
   text-align: center;
@@ -52,6 +52,42 @@ nav ul li {
   width: 3em;
   height: 3em;
   background-color: black;
+}
+
+.hidden {
+  display: none;
+}
+
+.rows {
+  border-top: 1px solid lightgrey;
+  border-bottom: 1px solid lightgrey;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  margin: 0;
+  display: flex;
+  justify-content:flex-start;
+}
+
+.rows button {
+  margin-left: auto;
+}
+
+.rows:nth-of-type(odd) {
+  background-color: #EEEEEE;
+}
+
+form select, form input {
+  margin-right: 1em;
+}
+
+#formButtons {
+  margin-top: 1em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.message {
+  color: crimson;
 }
 
 h1 {

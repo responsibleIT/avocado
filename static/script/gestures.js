@@ -151,7 +151,7 @@ async function predictWebcam() {
             gestureOutput.innerText += `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore} %\n`;
 
             for (const rule of config.rules.gestures) {
-                if (rule.gesture == categoryName) {
+                if (rule.label == categoryName) {
                     if (rule.outputType == 'text') {
                         outputText += rule.output + " "
                     }
