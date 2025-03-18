@@ -476,7 +476,7 @@ can opener
 cardigan
 car mirror
 carousel
-carpenter\'s kit
+carpenter's kit
 carton
 car wheel
 cash machine
@@ -606,7 +606,7 @@ horse cart
 hourglass
 iPod
 iron
-jack-o\'-lantern
+jack-o'-lantern
 jean
 jeep
 jersey
@@ -738,7 +738,7 @@ poncho
 pool table
 pop bottle
 pot
-potter\'s wheel
+potter's wheel
 power drill
 prayer rug
 printer
@@ -985,7 +985,7 @@ groom
 scuba diver
 rapeseed
 daisy
-yellow lady\'s slipper
+yellow lady's slipper
 corn
 acorn
 hip

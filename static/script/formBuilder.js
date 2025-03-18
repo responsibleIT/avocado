@@ -1,5 +1,8 @@
 const outputTypes = ['text', 'color']
 
+let objectLabels
+let gestureLabels
+
 const myForm = document.getElementById("configForm")
 const formConfigInput = document.getElementById("configInput")
 const formContents = document.getElementById("formContents")
@@ -7,12 +10,29 @@ const formButtons= document.getElementById("formButtons")
 const selectGestureDetection = document.getElementById("gestureDetection")
 const selectObjectDetection = document.getElementById("objectDetection")
 const addRuleButton = document.getElementById("addRuleButton")
+const objectParams = document.getElementById("objectDetectionParams")
+const gestureParams = document.getElementById("gestureDetectionParams")
+const gestureModel = document.getElementById("gestureModel")
+const gestureNr = document.getElementById("gestureNr")
+const gestureConfidence = document.getElementById("gestureConfidence")
+const objectModel = document.getElementById("objectModel")
+const objectNr = document.getElementById("objectNr")
+const objectConfidence = document.getElementById("objectConfidence")
 
+
+function convertLabelFile(labels) {
+    let labelArray = []
+    const allLabels = labels.split("\n")
+    for (l of allLabels) {
+        labelArray.push(l)
+    }
+
+    return labelArray
+}
 
 function addRule(rule) {
     const newRule = document.createElement('p')
     newRule.classList.add("rows")
-    // newRule.innerHTML = rule.label + " " + rule.outputType + " "  + rule.output
 
     const newLabel = document.createElement('select')
     newLabel.setAttribute("data-name", "label")
@@ -81,19 +101,34 @@ function addRule(rule) {
     formContents.appendChild(newRule)
 }
 
-function buildForm() {
+async function buildForm() {
     formContents.classList.add('hidden')
     formButtons.classList.add('hidden')
-    formContents.innerHTML = ""
+      
+    formContents.innerHTML = "<h2>Rules for detection matching</h2>"
 
     if (selectGestureDetection.checked) {
         config.detectionType = 'gestures'
+        labelFile = userPath + '/models/gestures/' +  gestureModel.value + '.labels.txt'
+        const response = await fetch(labelFile)
+        const labels = await response.text()
+        gestureLabels = convertLabelFile(labels)
+
+        objectParams.classList.add('hidden')
+        gestureParams.classList.remove('hidden')
         for (rule of config.rules.gestures) {
             addRule(rule)
         }
     }
     else if (selectObjectDetection.checked) {
         config.detectionType = 'objects'
+        labelFile = userPath + '/models/objects/' +  objectModel.value + '.labels.txt'
+        const response = await fetch(labelFile)
+        const labels = await response.text()
+        objectLabels = convertLabelFile(labels)
+
+        gestureParams.classList.add('hidden')
+        objectParams.classList.remove('hidden')
         for (rule of config.rules.objects) {
             addRule(rule)
         }
@@ -109,23 +144,28 @@ function addConfig(Event) {
         const newRule = {}
         for (const grandchild of child.children) {
             if (grandchild.tagName == "INPUT" || grandchild.tagName == "SELECT"  ) {
-                // Object.defineProperty(newRule, grandchild.dataset.name, {value:grandchild.value, enumerable:true})
                 newRule[grandchild.dataset.name] = grandchild.value
             }
         }
-        iGotNewRules.push(newRule)
+        if (newRule.label) { iGotNewRules.push(newRule) }
     }
 
     if (selectGestureDetection.checked) {
         config.detectionType = 'gestures'
+        config.modelPath.gestures = gestureModel.value
+        config.nr.gestures = parseInt(gestureNr.value)
+        // config.confidence.gestures = parseInt(gestureConfidence.value)
         config.rules.gestures = iGotNewRules.slice()
-         
     } else if (selectObjectDetection.checked) {
         config.detectionType = 'objects'
+        config.modelPath.objects = objectModel.value
+        config.nr.objects = parseInt(objectNr.value)
+        config.confidence.objects = parseInt(objectConfidence.value)
         config.rules.objects = iGotNewRules.slice()
     }
 
     formConfigInput.value = JSON.stringify(config, null, 2)
+
 }
 
 function addEmptyRule() {
@@ -140,5 +180,7 @@ function addEmptyRule() {
 window.addEventListener("load", buildForm)
 selectGestureDetection.addEventListener("change", buildForm)
 selectObjectDetection.addEventListener("change", buildForm)
+objectModel.addEventListener("change", buildForm)
+gestureModel.addEventListener("change", buildForm)
 myForm.addEventListener("submit", addConfig)
 addRuleButton.addEventListener("click", addEmptyRule)

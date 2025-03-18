@@ -60,17 +60,17 @@ function initUserDir (userDir) {
     })
 }
 
-function convertLabelFile(labels) {
-    let labelString = '['
-    const allLabels = labels.split("\n")
-    for (l of allLabels) {
-        labelString += "'" + l + "',"
-    }
-    labelString = labelString.substring(0, labelString.length - 1);
-    labelString += ']'
+// function convertLabelFile(labels) {
+//     let labelString = '['
+//     const allLabels = labels.split("\n")
+//     for (l of allLabels) {
+//         labelString += "'" + l.replace("'", "\\'") + "',"
+//     }
+//     labelString = labelString.substring(0, labelString.length - 1);
+//     labelString += ']'
 
-    return labelString
-}
+//     return labelString
+// }
 
 // routes
 app.get('/', isAuthenticated, (req, res) => {
@@ -81,45 +81,82 @@ app.get('/', isAuthenticated, (req, res) => {
     config = JSON.parse(configTXT)
     detectionScript = './script/' + config.detectionType + '.js'
 
-    res.render('recognise.ejs', {userName: req.session.userName, userPath: userPath, config: configTXT, detectionScript: detectionScript})
+    res.render('recognise.ejs', {userName: req.session.userName, userPath: userPath, config: configTXT, detectionScript: detectionScript, curPage: "detect"})
 })
 
 app.get('/config', isAuthenticated, (req, res) => {
     const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const userPath = '/' + process.env.DIR_USERS + '/' + slugify(req.session.userName, {lower: true})
     const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
+    const configURL = '/' + process.env.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + process.env.DIR_CONFIG + '/' + 'config.json'
     const configTXT = fs.readFileSync(configFile, 'utf8');
     config = JSON.parse(configTXT)
 
-    const objectLabelFile = path.join(userDir, process.env.DIR_MODELS, 'objects', config.modelPath.objects.substring(config.modelPath.objects.lastIndexOf('/') + 1) + '.labels.txt')
-    const objectLabels = fs.readFileSync(objectLabelFile, 'utf8');
-    var objectLabelsTXT = convertLabelFile(objectLabels)
+    // const objectLabelFile = path.join(userDir, process.env.DIR_MODELS, 'objects', config.modelPath.objects.substring(config.modelPath.objects.lastIndexOf('/') + 1) + '.labels.txt')
+    // const objectLabels = fs.readFileSync(objectLabelFile, 'utf8');
+    // var objectLabelsTXT = convertLabelFile(objectLabels)
 
-    const gestureLabelFile = path.join(userDir, process.env.DIR_MODELS, 'gestures', config.modelPath.gestures.substring(config.modelPath.gestures.lastIndexOf('/') + 1) + '.labels.txt')
-    const gestureLabels = fs.readFileSync(gestureLabelFile, 'utf8');
-    var gestureLabelsTXT = convertLabelFile(gestureLabels)
+    // const gestureLabelFile = path.join(userDir, process.env.DIR_MODELS, 'gestures', config.modelPath.gestures.substring(config.modelPath.gestures.lastIndexOf('/') + 1) + '.labels.txt')
+    // const gestureLabels = fs.readFileSync(gestureLabelFile, 'utf8');
+    // var gestureLabelsTXT = convertLabelFile(gestureLabels)
 
+    const objectModelPath = path.join(userDir, process.env.DIR_MODELS, 'objects')
+    const objectFiles = fs.readdirSync(objectModelPath)
+    const objectModels = objectFiles.filter(file => {
+        return path.extname(file).toLowerCase() === '.tflite'
+    })
+
+    const gestureModelPath = path.join(userDir, process.env.DIR_MODELS, 'gestures')
+    const gestureFiles = fs.readdirSync(gestureModelPath)
+    const gestureModels = gestureFiles.filter(file => {
+        return path.extname(file).toLowerCase() === '.task'
+    })
 
     const saved = xss(req.query.saved)
-    res.render('configure.ejs', {saved: saved, userName: req.session.userName, config: configTXT, detectionType: config.detectionType, objectLabels: objectLabelsTXT, gestureLabels: gestureLabelsTXT})
+    
+    res.render('configure.ejs', {
+        saved: saved, 
+        userName: req.session.userName, 
+        userPath: userPath,
+        config: configTXT,
+        configURL: configURL,
+        detectionType: config.detectionType,
+        // objectLabels: objectLabelsTXT,
+        // gestureLabels: gestureLabelsTXT,
+        currentModel: config.modelPath,
+        nr: config.nr,
+        confidence: config.confidence,
+        objectModels: objectModels,
+        gestureModels: gestureModels,
+        curPage: "config"
+    })
 })
 
 app.post('/config', isAuthenticated, (req, res) => {
     const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
-    
-    fs.writeFileSync(configFile, req.body.configTXT, 'utf8');
 
-    res.redirect("/config?saved=true")
+    if (req.body.configTXT) {
+        fs.writeFileSync(configFile, req.body.configTXT, 'utf8')
+        res.redirect("/config?saved=ok")
+    } else {
+        res.redirect("/config?saved=error")
+    }
+})
+
+app.get('/models', isAuthenticated, (req, res) => {
+    res.render('models.ejs', {userName: req.session.userName, curPage: "models"})
 })
 
 app.get('/login', (req, res) => {
     const error = xss(req.query.error)
-    res.render('login.ejs', {error: error, userName: req.session.userName})
+    res.render('login.ejs', {error: error, userName: req.session.userName, curPage: "login"})
 })
   
 app.post('/login', async (req, res) => {
+    const myUserName = xss(req.body.name.toLowerCase())
 
-    const myUser = users.users.find(x => x.name === xss(req.body.name))
+    const myUser = users.users.find(x => x.name.toLowerCase() === myUserName)
     if (myUser && myUser.password === xss(req.body.password)) {
 
         // check if a directory for this user's data already exists, otherwise create it and it's subdirectories

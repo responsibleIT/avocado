@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configure Detection Rules</title>
-    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-    <script>const config = <%- config %> </script>
-    <script>const gestureLabels = <%- gestureLabels %> </script>
-    <script>const objectLabels = <%- objectLabels %> </script>
+    <script>const config = <%- config %></script>
+    <script>const userPath = "<%- userPath %>"</script>
     <link href="./css/styles.css" rel="stylesheet">
 </head>
 
@@ -16,25 +13,59 @@
 <%- include('partials/header') %>
 
 <main>
-    <h1>Please update your configuration and then save it</h1>
-    <% if(saved){ %>
+    <h1>Your configuration for AI detection</h1>
+    <% if(saved == 'ok'){ %>
         <p class="message">Your configuration was saved</p>
-    <% } %>  
+    <% } else if(saved == 'error'){ %>
+        <p class="message">Something went wrong, couldn't save your configuration</p>
+    <% } %> 
 
     <form id="configForm" action="config" method="post">
         <input id="configInput" name="configTXT" type="hidden">
         <section>
-            Detection type:<br>
+            <h2>Detection type</h2>
             <input name="detectionType" id="gestureDetection" type="radio" value="gestures" <% if(detectionType == 'gestures') { %> checked <% } %> > 
-            <label for="gestureDetection">Gestures</label><br>
+            <label class="inline" for="gestureDetection">Gestures</label><br>
             <input name="detectionType" id="objectDetection" type="radio" value="objects" <% if(detectionType == 'objects') { %> checked <% } %> >
-            <label for="objectDetection">Objects</label><br>
+            <label class="inline" for="objectDetection">Objects</label>
+        </section>
+        <section id="gestureDetectionParams" class="params" <% if(detectionType != 'gestures') { %> class="hidden"<% } %> >
+            <h2>AI model settings for gesture detection</h2>
+            <label for="gestureModel">Model</label>
+            <select id="gestureModel"  >
+            <% for (const model of gestureModels) { %>
+                <option value="<%- model %>" <% if(model == currentModel.gestures) { %>selected<% } %> ><%- model %></option>  
+            <% } %>
+            </select>
+            <label for="gestureNr">Number of hands to detect (1 or 2)</label>
+            <input id="gestureNr" type="number" value="<%- nr.gestures %>" min="1" max="2">
+            <!-- <label for="gestureDetection">Required confidence level</label>
+            <input id="gestureConfidence" type="number" value="<%- confidence.gestures %>" min="0" max="100" step="5">% -->
+        </section>
+        <section id="objectDetectionParams" class="params" <% if(detectionType != 'objects') { %> class="hidden"<% } %> >
+            <h2>AI model settings for object detection</h2>
+            <label for="öbjectModel">Model</label>
+            <select id="objectModel" >
+            <% for (const model of objectModels) { %>
+                <option value="<%- model %>" <% if(model == currentModel.objects) { %>selected<% } %> ><%- model %></option>  
+            <% } %>
+            </select>
+            <label for="objectNr">Number of objects to detect (1-5)</label>
+            <input id="objectNr" type="number" value="<%- nr.objects %>" min="1" max="5">
+            <label for="objectConfidence">Minimum confidence level</label>
+            <input id="objectConfidence" type="number" value="<%- confidence.objects %>" min="0" max="100" step="5">%
         </section>
         <section id="formContents" class="hidden">
         </section>
         <section id="formButtons" class="hidden">
             <button id="addRuleButton" type="button">Add rule</button>
-            <input type="submit" value="Save">
+            <div>
+                <div>
+                    <p><a href="<%- configURL %>" download>Download backup</a> of your current configuration</p>
+                    <!-- <p><a href="<%- configURL %>" download>Restore backup</a> of your configuration</p> -->
+                </div>
+                <input class="primarybutton" type="submit" value="Save">
+            </div>
         </section>
 
     </form>

@@ -1,27 +1,9 @@
-<!-- Copyright 2023 The MediaPipe Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recogniser</title>
-
-    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-
     <link href="./css/styles.css" rel="stylesheet">
     <script src="./script/colorMixer.js"></script>
     <script>const config = <%- config %> </script>
@@ -32,34 +14,31 @@ limitations under the License. -->
 <%- include('partials/header') %>
 
 <main>
-
   <h1>Recognize hand gestures or objects using MediaPipe</h1>
-  <h2>Demo: Webcam continuous detection</h2>
-  <p>Use your hand to make gestures in front of the camera or place objects in front of the camera. </br>Click <b>enable webcam</b> below and grant access to the webcam if prompted.</p>
+  <p>Use your hand to make gestures or place objects in front of the camera.</p>
 
-  <section class="response">
-    <p id='responseText'>&nbsp;</p>
-    <p id='responseColor' class='responseColor'></p>
-  </section>
+  <div class="columns">
 
-  <section id="demos" class="invisible">
-    <div id="liveView" class="videoView">
-      <button id="webcamButton" class="mdc-button mdc-button--raised">
-        <span class="mdc-button__ripple"></span>
-        <span class="mdc-button__label">ENABLE WEBCAM</span>
-      </button>
-      <div style="position: relative;">
-        <video id="webcam" autoplay playsinline></video>
-        <canvas class="output_canvas" id="output_canvas" width="1280" height="720" style="position: absolute; left: 0px; top: 0px;"></canvas>
+    <section id="demos">
+      <h2>Detection</h2>
+        <button id="webcamButton">DISABLE RECOGNITION</button>
+        <div class="videocontainer">
+          <video id="webcam" autoplay playsinline></video>
+          <canvas id="output_canvas" width="1280" height="720"></canvas>
+        </div>
         <p id='webcamPredictions' class="output">
-      </div>
-    </div>
-  </section>
+        </section>
 
+    <section>
+      <h2>Output</h2>
+      <div class="response">
+        <p id='responseText'></p>
+        <p id='responseColor'></p>
+    </section>
 
+  </div>
 
 </main>
-
 </body>
 </html>
 

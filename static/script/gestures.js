@@ -11,10 +11,10 @@
 
 // import { GestureRecognizer, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js";
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
-const demosSection = document.getElementById("demos");
+// const demosSection = document.getElementById("demos");
 let gestureRecognizer;
 let runningMode = "VIDEO";
-let enableWebcamButton;
+const enableWebcamButton = document.getElementById("webcamButton");
 let webcamRunning = false;
 const videoHeight = "360px";
 const videoWidth = "480px";
@@ -25,17 +25,27 @@ const createGestureRecognizer = async () => {
     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
     gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
         baseOptions: {
-            modelAssetPath: userPath + config.modelPath.gestures,
+            modelAssetPath: userPath + 'models/gestures/' +  config.modelPath.gestures,
             // modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
             delegate: "GPU"
         },
-        numHands: 2,
+        numHands: config.nr.gestures,
         runningMode: runningMode
     });
-    // we set numHands to two. This should have been taken care of during initialisation of the recogniser, but that doesn't seem to work right now
-    await gestureRecognizer.setOptions({ numHands: 2 });
-    demosSection.classList.remove("invisible");
+    // we set some options. This should have been taken care of during initialisation of the recogniser, but that doesn't seem to work properly right now
+    await gestureRecognizer.setOptions({ numHands: config.nr.gestures })
+    // demosSection.classList.remove("invisible");
+
+    // If webcam supported, add event listener to button.
+    if (hasGetUserMedia()) {
+        enableWebcamButton.addEventListener("click", enableCam);
+        enableCam()
+    }
+    else {
+        console.warn("getUserMedia() is not supported by your browser");
+    }
 };
+
 createGestureRecognizer();
 
 /********************************************************************
@@ -52,15 +62,7 @@ const detectorResponseColor = document.getElementById("responseColor");
 function hasGetUserMedia() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 }
-// If webcam supported, add event listener to button for when user
-// wants to activate it.
-if (hasGetUserMedia()) {
-        enableWebcamButton = document.getElementById("webcamButton");
-        enableWebcamButton.addEventListener("click", enableCam);
-}
-else {
-    console.warn("getUserMedia() is not supported by your browser");
-}
+
 // Enable the live webcam view and start detection.
 function enableCam(event) {
     if (!gestureRecognizer) {
@@ -125,8 +127,8 @@ async function predictWebcam() {
         // if (results.gestures.length == 2) { 
         //     console.log(results.gestures[0][0].categoryName + " --- " + results.gestures[1][0].categoryName)
         // }
-        gestureOutput.style.display = "block";
-        gestureOutput.style.width = videoWidth;
+        // gestureOutput.style.display = "block";
+        // gestureOutput.style.width = videoWidth;
         gestureOutput.innerText = ''
         let outputText = ""
         let outputColors = []
@@ -148,12 +150,12 @@ async function predictWebcam() {
             // }
 
             // gestureOutput.innerText = `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore} %\n Handedness: ${realHandedness}`;
-            gestureOutput.innerText += `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore} %\n`;
+            gestureOutput.innerText += `Gesture: ${categoryName}, confidence: ${categoryScore} %\n`;
 
             for (const rule of config.rules.gestures) {
                 if (rule.label == categoryName) {
                     if (rule.outputType == 'text') {
-                        outputText += rule.output + " "
+                        outputText += rule.output + "\n"
                     }
                     if (rule.outputType == 'color') {
                         outputColors.push(rule.output)
@@ -176,7 +178,7 @@ async function predictWebcam() {
         }       
 
     } else {
-        gestureOutput.style.display = "none";
+        // gestureOutput.style.display = "none";
     }
 
     // Call this function again to keep predicting when the browser is ready.

@@ -1,61 +1,154 @@
-/* Copyright 2023 The MediaPipe Authors.
+/* page styles */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+:root {
+  --color-white: white;
+  --color-lightest: #efeff7;
+  --color-light:#185b96;
+  --color-dark: #351fb7;
+  --color-darker: #25167a;
+  --color-darkest: #1E1649;
+  --color-accent1: #f35279;
+  --color-accent2: #02857d;
+  --color-accent3: #d54300;
+}
 
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. */
-
-/* @use "@material"; */
 body {
-  font-family: roboto;
-  margin: 2em;
-  color: #3d3d3d;
-  --mdc-theme-primary: #007f8b;
-  --mdc-theme-on-primary: #f1f3f4;
+  font-family: "Open Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+
+  margin: 2em auto;
+  padding-left: 2em;
+  padding-right: 2em;
+  background-color: var(--color-white);
+  color: var(--color-darkest);
+  max-width: 1400px;
+}
+
+h1 {
+  color: var(--color-accent2)
+}
+
+h2 {
+  color: var(--color-accent2)
+}
+
+a {
+  color: var(--color-darker);
+}
+
+a:visited {
+  color: var(--color-darker);
+}
+
+a:hover {
+  color: var(--color-light);
+}
+
+.primarybutton {
+  display: block;
+  border-radius: 0.4em;
+  padding: 0.5em 2em;
+  color: white;
+  background-color: var(--color-darker);
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 250ms ease;
+  margin: 1em 0em;
+}
+
+.primarybutton:hover {
+  background-color: var(--color-light);
+}
+
+.primarybutton:active {
+  transform: translateY(1px);
+}
+
+.hidden {
+  display: none;
+}
+
+/* header styles */
+.utilitynav {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.utilitynav p {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.logo {
+  width: 30em;
 }
 
 nav ul {
   display: flex;
   list-style-type: none;
-  justify-content: space-around;
-  padding-left: 0;
+  justify-content:center;
+  gap: 3em;
+  padding: 0;
 }
 
-nav ul li {
+nav li {
   display: block;
-  width: 6em;
-  height: 3em;
-  background-color: skyblue;
-  border: 1px solid royalblue;
+  width: 10em;
+  padding: 1em 0em;
   text-align: center;
+  transition: all 250ms ease;
 }
 
-.response {
-  display: flex;
-  justify-content: space-between;
-  width: 20em;
-  font-size: calc(8px + 1.2vw);
-  padding: 1em;
-  background-color: lightblue;
+nav a {
+  text-decoration: none;
+  color: var(--color-darkest);
+  font-size: 1.2em;
+  font-weight: 800;
+  padding: 0.1em 0em;
 }
 
-.responseColor {
-  border: 2px solid black;
-  border-radius: 2em;
+nav a:hover {
+  color: var(--color-darkest);
+  border-bottom: 4px solid var(--color-darkest);
+}
+
+nav a.active {
+  border-bottom: 4px solid var(--color-darkest);
+}
+
+
+
+/* form styles */
+label {
+  display: block;
+  margin: 0.2rem 0rem;
+}
+
+label.inline {
+  display: inline;
+}
+
+.message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-accent1);
+}
+
+input, select {
+  margin: 0.2rem 1rem 0.2rem 0rem;
+}
+
+.params input[type="number"] {
   width: 3em;
-  height: 3em;
-  background-color: black;
 }
 
-.hidden {
-  display: none;
+.params select {
+  min-width: 17em;
 }
 
 .rows {
@@ -66,117 +159,92 @@ nav ul li {
   margin: 0;
   display: flex;
   justify-content:flex-start;
-}
-
-.rows button {
-  margin-left: auto;
+  max-width: 50rem;
 }
 
 .rows:nth-of-type(odd) {
   background-color: #EEEEEE;
 }
 
-form select, form input {
-  margin-right: 1em;
+.rows button {
+  margin-left: auto;
+  margin-right: 0.2em;
 }
 
 #formButtons {
-  margin-top: 1em;
+  margin-top: 0.8em;
+}
+
+#formButtons > button {
+  padding: 0.3rem 1.5rem;
+}
+
+#formButtons > div {
+  margin-top: 0.5em;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  max-width: 50rem;
 }
 
-.message {
-  color: crimson;
+
+
+/* detector styles */
+.columns {
+  display: flex;
+  gap: 2rem;
 }
 
-h1 {
-  color: #007f8b;
+.columns section {
+  background-color: var(--color-lightest);
+  padding: 1rem 1.5rem;
 }
 
-h2 {
-  clear: both;
+.columns h2 {
+  color: var(--color-accent1);
+  margin-top: 0rem;
+}
+
+.response {
+  display: flex;
+  justify-content: space-between;
+  align-items:flex-start;
+  width: 20em;
+  font-size: 1.1rem;
+}
+
+#responseColor {
+  border: 2px solid black;
+  border-radius: 2em;
+  width: 3em;
+  height: 3em;
+  background-color: black;
 }
 
 video {
-  clear: both;
   display: block;
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg);
   -moz-transform: rotateY(180deg);
-  /* height: 280px; */
 }
 
-section {
-  opacity: 1;
-  transition: opacity 500ms ease-in-out;
-}
-
-.removed {
-  display: none;
-}
-
-.invisible {
-  opacity: 0.2;
-}
-
-.detectOnClick {
+.videocontainer {
   position: relative;
-  float: left;
-  width: 48%;
-  margin: 2% 1%;
-  cursor: pointer;
-}
-.videoView {
-  position: absolute;
-  float: left;
-  width: 48%;
-  margin: 2% 1%;
-  cursor: pointer;
-  min-height: 500px;
 }
 
-.videoView p,
-.detectOnClick p {
-  padding-top: 5px;
-  padding-bottom: 5px;
-  background-color: #007f8b;
-  color: #fff;
-  border: 1px dashed rgba(255, 255, 255, 0.7);
-  z-index: 2;
-  margin: 0;
-}
-
-.highlighter {
-  background: rgba(0, 255, 0, 0.25);
-  border: 1px dashed #fff;
+canvas {
+  position: absolute; 
+  left: 0px; 
+  top: 0px;
   z-index: 1;
-  position: absolute;
-}
-
-.canvas {
-  z-index: 1;
-  position: absolute;
   pointer-events: none;
-}
-
-.output_canvas {
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg);
   -moz-transform: rotateY(180deg);
 }
 
-.detectOnClick {
-  z-index: 0;
-  font-size: calc(8px + 1.2vw);
-}
-
-.detectOnClick img {
-  width: 45vw;
-}
 .output {
-  display: none;
-  width: 100%;
-  font-size: calc(8px + 1.2vw);
+  font-size: 1.1rem;
+  min-height: 6rem;
 }
 

@@ -12,15 +12,20 @@ import { ImageClassifier, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@
 // Get DOM elements
 const video = document.getElementById("webcam");
 const webcamPredictions = document.getElementById("webcamPredictions");
-const demosSection = document.getElementById("demos");
+// const demosSection = document.getElementById("demos");
 const detectorResponseText = document.getElementById("responseText");
 const detectorResponseColor = document.getElementById("responseColor");
-let enableWebcamButton;
+const enableWebcamButton = document.getElementById("webcamButton");
 let webcamRunning = false;
 const videoHeight = "360px";
 const videoWidth = "480px";
 const imageContainers = document.getElementsByClassName("classifyOnClick");
-let runningMode = "VIDO";
+let runningMode = "VIDEO";
+
+// Check if webcam access is supported.
+function hasGetUserMedia() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
 
 // Track imageClassifier object and load status.
 let imageClassifier;
@@ -32,26 +37,30 @@ const createImageClassifier = async () => {
     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm");
     imageClassifier = await ImageClassifier.createFromOptions(vision, {
         baseOptions: {
-            modelAssetPath: userPath + config.modelPath.objects
+            modelAssetPath: userPath + 'models/objects/' + config.modelPath.objects
             // modelAssetPath: `https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite0/float32/1/efficientnet_lite0.tflite`
             // NOTE: For this demo, we keep the default CPU delegate.
         },
-        maxResults: 4,
-        scoreThreshold: 0.25,
+        maxResults: config.nr.objects ,
+        scoreThreshold: config.confidence.objects / 100 ,
         runningMode: runningMode
     });
     // Show demo section now model is ready to use.
-    demosSection.classList.remove("invisible");
+    // demosSection.classList.remove("invisible");
+    // If webcam supported, add event listener to button.
+    if (hasGetUserMedia()) {
+        enableWebcamButton.addEventListener("click", enableCam);
+        enableCam()
+    }
+    else {
+        console.warn("getUserMedia() is not supported by your browser");
+    }
+
 };
+
 createImageClassifier();
 
-/********************************************************************
-// Demo 2: Continuously grab image from webcam stream and classify it.
-********************************************************************/
-// Check if webcam access is supported.
-function hasGetUserMedia() {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-}
+
 // Get classification from the webcam
 async function predictWebcam() {
     // Do not classify if imageClassifier hasn't loaded
@@ -67,15 +76,15 @@ async function predictWebcam() {
     const classificationResult = imageClassifier.classifyForVideo(video, startTimeMs);
     video.style.height = videoHeight;
     video.style.width = videoWidth;
-    webcamPredictions.style.width = videoWidth;
+    // webcamPredictions.style.width = videoWidth;
     const classifications = classificationResult.classifications;
 
     for (const category of classifications[0].categories) {
-        webcamPredictions.className = "webcamPredictions";
+        // webcamPredictions.className = "webcamPredictions";
         webcamPredictions.innerText +=
             "Classification: " +
                 category.categoryName +
-                "\t Confidence: " +
+                ", confidence: " +
                 Math.round(parseFloat(category.score) * 100) +
                 "%\n";
 
@@ -116,11 +125,11 @@ async function enableCam(event) {
     }
     if (webcamRunning === true) {
         webcamRunning = false;
-        enableWebcamButton.innerText = "ENABLE PREDICTIONS";
+        enableWebcamButton.innerText = "ENABLE RECOGNITION";
     }
     else {
         webcamRunning = true;
-        enableWebcamButton.innerText = "DISABLE PREDICTIONS";
+        enableWebcamButton.innerText = "DISABLE RECOGNITION";
     }
     // getUsermedia parameters.
     const constraints = {
@@ -129,12 +138,4 @@ async function enableCam(event) {
     // Activate the webcam stream.
     video.srcObject = await navigator.mediaDevices.getUserMedia(constraints);
     video.addEventListener("loadeddata", predictWebcam);
-}
-// If webcam supported, add event listener to button.
-if (hasGetUserMedia()) {
-    enableWebcamButton = document.getElementById("webcamButton");
-    enableWebcamButton.addEventListener("click", enableCam);
-}
-else {
-    console.warn("getUserMedia() is not supported by your browser");
 }

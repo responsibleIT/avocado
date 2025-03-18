@@ -1,8 +1,16 @@
 {
     "detectionType": "gestures",
     "modelPath" : {
-        "gestures" : "models/gestures/gesture_recognizer.task",
-        "objects"  : "models/objects/efficientdet_lite0.tflite"
+        "gestures" : "gesture_recognizer.task",
+        "objects"  : "efficientdet_lite0.tflite"
+    },
+    "nr": {
+        "gestures": 2,
+        "objects": 3
+    },
+    "confidence": {
+        "gestures": 50,
+        "objects": 50
     },
     "rules" : {
         "gestures" : [],
