@@ -1,6 +1,0 @@
-0 Catbus
-1 Daruma
-2 Monk
-3 Kokeshi
-4 Maneki neko
-5 None
