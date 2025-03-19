@@ -166,7 +166,8 @@ app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, 
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
 
-    // copy uploaded config to user dir
+    // backup current config and copy uploaded config to user dir
+    fs.copyFileSync(configFile, configFile + '.bak')   
     fs.copyFileSync(path.join(__dirname, 'upload', req.file.filename), configFile)   
     fs.rmSync(path.join(__dirname, 'upload', req.file.filename) )   
 

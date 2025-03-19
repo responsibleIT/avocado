@@ -1,3 +1,13 @@
+<% const now = new Date()
+const dd = String(now.getDate()).padStart(2, '0')
+const mm = String(now.getMonth() + 1).padStart(2, '0') //January is 0!
+const yyyy = now.getFullYear()
+const hh = String(now.getHours()).padStart(2, '0')
+const ms = String(now.getMinutes()).padStart(2, '0')
+
+const timestamp = dd + '-' + mm + '-' + yyyy + '_' + hh + ms
+
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,7 +72,7 @@
             <button id="addRuleButton" type="button">Add rule</button>
             <div>
                 <div>
-                    <p><a href="<%- configURL %>" download>Download backup</a> of your current configuration</p>
+                    <p><a href="<%- configURL %>" download="config-<%=timestamp%>.json">Download backup</a> of your current configuration</p>
                     <p><a href="/config/restore">Restore your configuration</a> from a backup</p>
                 </div>
                 <input class="primarybutton" type="submit" value="Save">
