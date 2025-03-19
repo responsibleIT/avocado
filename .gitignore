@@ -4,3 +4,4 @@ node_modules/
 static/users/*
 accounts.json
 nodemon.json
+upload/*

@@ -18,6 +18,8 @@ const xss = require('xss')
 const path = require('path')
 const fs = require('fs')
 const slugify = require('slugify')
+const multer = require('multer')
+const upload = multer({ dest: 'upload/' })
 
 let session = require('express-session')
 app.use(session({
@@ -148,6 +150,27 @@ app.post('/config', isAuthenticated, (req, res) => {
     } else {
         res.redirect("/config?saved=error")
     }
+})
+
+app.get('/config/restore', isAuthenticated, (req, res) => {
+    const configURL = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + myServer.config.DIR_CONFIG + '/' + 'config.json'
+
+    res.render('configrestore.ejs', {
+        userName: req.session.userName,
+        configURL: configURL,
+        curPage: "config"
+    })
+})
+
+app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, res) => {
+    const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
+
+    // copy uploaded config to user dir
+    fs.copyFileSync(path.join(__dirname, 'upload', req.file.filename), configFile)   
+    fs.rmSync(path.join(__dirname, 'upload', req.file.filename) )   
+
+    res.redirect("/config?saved=ok")
 })
 
 app.get('/models', isAuthenticated, (req, res) => {
