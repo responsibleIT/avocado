@@ -1,0 +1,8 @@
+{
+    "config": { 
+        "DIR_STATIC": "static",
+        "DIR_USERS": "users",
+        "DIR_MODELS": "models",
+        "DIR_CONFIG": "config"
+    }
+}

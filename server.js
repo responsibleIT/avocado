@@ -1,15 +1,18 @@
 // Add info from .env file to process.env
 require('dotenv').config() 
 
-// get user accounts
+// get user accounts and server configuration
 const users = require('./accounts.json') 
+const myServer = require('./serverconfig.json')
 
 // Initialise Express webserver
 const express = require('express')
 const app = express()
 
-import helmet from "helmet"
-app.use(helmet())
+const helmet = require("helmet")
+app.use(
+    helmet({ contentSecurityPolicy: false })
+)
 
 const xss = require('xss')
 const path = require('path')
@@ -25,7 +28,7 @@ app.use(session({
 
 app
   .use(express.urlencoded({extended: true}))    // middleware to parse form data from incoming HTTP request and add form fields to req.body
-  .use(express.static(process.env.DIR_STATIC))  // Allow server to serve static content such as images, stylesheets, fonts or frontend js from the directory named static
+  .use(express.static(myServer.config.DIR_STATIC))  // Allow server to serve static content such as images, stylesheets, fonts or frontend js from the directory named static
   .set('view engine', 'ejs')                    // Set EJS to be our templating engine
 //   .set('views', 'views')                     // And tell it the views can be found in the directory named views
 
@@ -41,20 +44,20 @@ function initUserDir (userDir) {
             return console.error(err)
         }
 
-        fs.mkdir(path.join(userDir, process.env.DIR_MODELS), (err) => {
+        fs.mkdir(path.join(userDir, myServer.config.DIR_MODELS), (err) => {
             if (err) {  return console.error(err) }
 
             // copy default available models to user's directory
-            fs.cp(path.join(__dirname, process.env.DIR_MODELS), path.join(userDir, process.env.DIR_MODELS), {recursive: true}, (err) => {
+            fs.cp(path.join(__dirname, myServer.config.DIR_MODELS), path.join(userDir, myServer.config.DIR_MODELS), {recursive: true}, (err) => {
                 if (err) { return console.error(err) }  
             })
         })
 
-        fs.mkdir(path.join(userDir, process.env.DIR_CONFIG), (err) => {
+        fs.mkdir(path.join(userDir, myServer.config.DIR_CONFIG), (err) => {
             if (err) { return console.error(err) }
 
             // copy default config to user's directory
-            fs.cp(path.join(__dirname, process.env.DIR_CONFIG), path.join(userDir, process.env.DIR_CONFIG), {recursive: true}, (err) => {
+            fs.cp(path.join(__dirname, myServer.config.DIR_CONFIG), path.join(userDir, myServer.config.DIR_CONFIG), {recursive: true}, (err) => {
                 if (err) { return console.error(err) }  
             })
         })
@@ -77,9 +80,9 @@ function initUserDir (userDir) {
 
 // routes
 app.get('/', isAuthenticated, (req, res) => {
-    const userPath = './' + process.env.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/'
-    const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
-    const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
+    const userPath = './' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/'
+    const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
     const configTXT = fs.readFileSync(configFile, 'utf8');
     config = JSON.parse(configTXT)
     detectionScript = './script/' + config.detectionType + '.js'
@@ -88,28 +91,28 @@ app.get('/', isAuthenticated, (req, res) => {
 })
 
 app.get('/config', isAuthenticated, (req, res) => {
-    const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
-    const userPath = '/' + process.env.DIR_USERS + '/' + slugify(req.session.userName, {lower: true})
-    const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
-    const configURL = '/' + process.env.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + process.env.DIR_CONFIG + '/' + 'config.json'
+    const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const userPath = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true})
+    const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
+    const configURL = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + myServer.config.DIR_CONFIG + '/' + 'config.json'
     const configTXT = fs.readFileSync(configFile, 'utf8');
     config = JSON.parse(configTXT)
 
-    // const objectLabelFile = path.join(userDir, process.env.DIR_MODELS, 'objects', config.modelPath.objects.substring(config.modelPath.objects.lastIndexOf('/') + 1) + '.labels.txt')
+    // const objectLabelFile = path.join(userDir, myServer.config.DIR_MODELS, 'objects', config.modelPath.objects.substring(config.modelPath.objects.lastIndexOf('/') + 1) + '.labels.txt')
     // const objectLabels = fs.readFileSync(objectLabelFile, 'utf8');
     // var objectLabelsTXT = convertLabelFile(objectLabels)
 
-    // const gestureLabelFile = path.join(userDir, process.env.DIR_MODELS, 'gestures', config.modelPath.gestures.substring(config.modelPath.gestures.lastIndexOf('/') + 1) + '.labels.txt')
+    // const gestureLabelFile = path.join(userDir, myServer.config.DIR_MODELS, 'gestures', config.modelPath.gestures.substring(config.modelPath.gestures.lastIndexOf('/') + 1) + '.labels.txt')
     // const gestureLabels = fs.readFileSync(gestureLabelFile, 'utf8');
     // var gestureLabelsTXT = convertLabelFile(gestureLabels)
 
-    const objectModelPath = path.join(userDir, process.env.DIR_MODELS, 'objects')
+    const objectModelPath = path.join(userDir, myServer.config.DIR_MODELS, 'objects')
     const objectFiles = fs.readdirSync(objectModelPath)
     const objectModels = objectFiles.filter(file => {
         return path.extname(file).toLowerCase() === '.tflite'
     })
 
-    const gestureModelPath = path.join(userDir, process.env.DIR_MODELS, 'gestures')
+    const gestureModelPath = path.join(userDir, myServer.config.DIR_MODELS, 'gestures')
     const gestureFiles = fs.readdirSync(gestureModelPath)
     const gestureModels = gestureFiles.filter(file => {
         return path.extname(file).toLowerCase() === '.task'
@@ -136,8 +139,8 @@ app.get('/config', isAuthenticated, (req, res) => {
 })
 
 app.post('/config', isAuthenticated, (req, res) => {
-    const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(req.session.userName, {lower: true}) )
-    const configFile = path.join(userDir, process.env.DIR_CONFIG, 'config.json')
+    const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
+    const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
 
     if (req.body.configTXT) {
         fs.writeFileSync(configFile, req.body.configTXT, 'utf8')
@@ -163,7 +166,7 @@ app.post('/login', async (req, res) => {
     if (myUser && myUser.password === xss(req.body.password)) {
 
         // check if a directory for this user's data already exists, otherwise create it and it's subdirectories
-        const userDir = path.join(__dirname, process.env.DIR_STATIC, process.env.DIR_USERS, slugify(myUser.name, {lower: true}) )
+        const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(myUser.name, {lower: true}) )
         try {
             await fs.promises.access(userDir)
         } catch (error) {
