@@ -24,7 +24,7 @@ function convertLabelFile(labels) {
     let labelArray = []
     const allLabels = labels.split("\n")
     for (l of allLabels) {
-        labelArray.push(l)
+        if (l) { labelArray.push(l) }
     }
 
     return labelArray

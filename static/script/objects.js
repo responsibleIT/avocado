@@ -91,7 +91,7 @@ async function predictWebcam() {
         for (const rule of config.rules.objects) {
             if (rule.label == category.categoryName) {
                 if (rule.outputType == 'text') {
-                    outputText += rule.output + " "
+                    outputText += rule.output + "\n"
                 }
                 if (rule.outputType == 'color') {
                     outputColors.push(rule.output)

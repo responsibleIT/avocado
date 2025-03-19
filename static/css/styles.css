@@ -20,12 +20,12 @@ body {
   font-style: normal;
   font-variation-settings: "wdth" 100;
 
-  margin: 2em auto;
+  margin: 1.5em auto;
   padding-left: 2em;
   padding-right: 2em;
   background-color: var(--color-white);
   color: var(--color-darkest);
-  max-width: 1400px;
+  max-width: 1200px;
 }
 
 h1 {
@@ -71,6 +71,8 @@ a:hover {
 .hidden {
   display: none;
 }
+
+
 
 /* header styles */
 .utilitynav {
@@ -143,6 +145,10 @@ input, select {
   margin: 0.2rem 1rem 0.2rem 0rem;
 }
 
+input[type="color"] {
+  margin: 0rem 1rem 0rem 0rem;
+}
+
 .params input[type="number"] {
   width: 3em;
 }
@@ -159,11 +165,12 @@ input, select {
   margin: 0;
   display: flex;
   justify-content:flex-start;
+  align-items: center;
   max-width: 50rem;
 }
 
 .rows:nth-of-type(odd) {
-  background-color: #EEEEEE;
+  background-color: var(--color-lightest);
 }
 
 .rows button {

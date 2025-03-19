@@ -8,6 +8,9 @@ const users = require('./accounts.json')
 const express = require('express')
 const app = express()
 
+import helmet from "helmet"
+app.use(helmet())
+
 const xss = require('xss')
 const path = require('path')
 const fs = require('fs')
