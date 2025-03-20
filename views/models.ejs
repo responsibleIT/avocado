@@ -12,7 +12,30 @@
 <%- include('partials/header') %>
 
 <main>
-    <h1>Sorry, nothing here yet</h1>
+    <h1>Upload new AI models</h1>
+    <p>Train your own models to perform detection and upload them here.</p>
+    
+    <h2>Object detection models, trained with Teachable Machine</h2>
+    <ol>
+        <li>Train your model for image recognition with <a href="https://teachablemachine.withgoogle.com/train/image" target="_blank">Teachable Machine</a></li>
+        <li>Make sure your model can recognise <strong>at least three</strong> different object classes.</li>
+        <li>It's a good idea to also have a class of &apos;None&apos; for when none of the objects are visible</li>
+        <li>Export your model in <strong>Tensorflow Lite</strong> format (also known as LiteRT)</li>
+        <li>Teachable Machine will provide you with a ZIP file to download, which you can then upload on this page.</li>
+    </ol>
+    <form action="/models/upload/objects-tm" method="post" enctype="multipart/form-data">
+        <p>
+            <label for="modelfile">TF Lite Model file (.zip)</label>
+            <input name="modelfile" id="modelfile" type="file" required accept=".zip">
+        </p>
+        <p>
+            <label for="name">Model name</label>
+            <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
+        </p>
+        <input class="primarybutton" type="submit" value="Upload Model">
+
+    </form>
 </main>
 </body>
 </html>
+
