@@ -68,6 +68,18 @@ function initUserDir (userDir) {
     })
 }
 
+function getTimestamp () {
+    const now = new Date()
+    const dd = String(now.getDate()).padStart(2, '0')
+    const mm = String(now.getMonth() + 1).padStart(2, '0') //January is 0!
+    const yyyy = now.getFullYear()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const ms = String(now.getMinutes()).padStart(2, '0')
+    
+    return dd + '-' + mm + '-' + yyyy + '_' + hh + ms
+
+}
+
 // function convertLabelFile(labels) {
 //     let labelString = '['
 //     const allLabels = labels.split("\n")
@@ -129,13 +141,12 @@ app.get('/config', isAuthenticated, (req, res) => {
         config: configTXT,
         configURL: configURL,
         detectionType: config.detectionType,
-        // objectLabels: objectLabelsTXT,
-        // gestureLabels: gestureLabelsTXT,
         currentModel: config.modelPath,
         nr: config.nr,
         confidence: config.confidence,
         objectModels: objectModels,
         gestureModels: gestureModels,
+        timestamp: getTimestamp(),
         curPage: "config"
     })
 })
@@ -154,10 +165,13 @@ app.post('/config', isAuthenticated, (req, res) => {
 
 app.get('/config/restore', isAuthenticated, (req, res) => {
     const configURL = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + myServer.config.DIR_CONFIG + '/' + 'config.json'
+    const saved = xss(req.query.saved)
 
-    res.render('configrestore.ejs', {
+    res.render('config-restore.ejs', {
+        saved: saved, 
         userName: req.session.userName,
         configURL: configURL,
+        timestamp: getTimestamp(),
         curPage: "config"
     })
 })
@@ -165,18 +179,29 @@ app.get('/config/restore', isAuthenticated, (req, res) => {
 app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, res) => {
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
+    const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
 
-    // backup current config and copy uploaded config to user dir
-    fs.copyFileSync(configFile, configFile + '.bak')   
-    fs.copyFileSync(path.join(__dirname, 'upload', req.file.filename), configFile)   
-    fs.rmSync(path.join(__dirname, 'upload', req.file.filename) )   
+    // check if uploaded file is valid JSON
+    const configFileContents = fs.readFileSync(uploadedFile, 'utf8')
+    try {
+        JSON.parse(configFileContents)
 
-    res.redirect("/config?saved=ok")
+        // backup current config and copy uploaded config to user dir
+        fs.copyFileSync(configFile, configFile + '.bak')   
+        fs.copyFileSync(uploadedFile, configFile)   
+        fs.rmSync(uploadedFile)   
+
+        res.redirect("/config?saved=ok")
+    } catch (error) {
+        res.redirect("/config/restore?saved=error")
+    }
 })
 
 app.get('/models', isAuthenticated, (req, res) => {
     res.render('models.ejs', {userName: req.session.userName, curPage: "models"})
 })
+
+
 
 app.get('/login', (req, res) => {
     const error = xss(req.query.error)
