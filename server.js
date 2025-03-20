@@ -193,6 +193,7 @@ app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, 
 
         res.redirect("/config?saved=ok")
     } catch (error) {
+        fs.rmSync(uploadedFile)  
         res.redirect("/config/restore?saved=error")
     }
 })
