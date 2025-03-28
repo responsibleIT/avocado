@@ -76,6 +76,17 @@ a:hover {
 
 
 /* header styles */
+header {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
+
+header > div {
+  width: 100%;
+  justify-content: center;
+}
+
 .utilitynav {
   display: flex;
   justify-content: space-between;
@@ -124,6 +135,11 @@ nav a.active {
   border-bottom: 4px solid var(--color-darkest);
 }
 
+header > img {
+  display: block;
+  margin: 0rem 0rem 0rem 2.5rem;
+  width: 6rem;
+}
 
 
 /* form styles */

@@ -187,7 +187,7 @@ app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, 
         JSON.parse(configFileContents)
 
         // backup current config and copy uploaded config to user dir
-        fs.copyFileSync(configFile, configFile + '.bak')   
+        fs.renameSync(configFile, configFile + '.bak')   
         fs.copyFileSync(uploadedFile, configFile)   
         fs.rmSync(uploadedFile)   
 
@@ -202,7 +202,29 @@ app.get('/models', isAuthenticated, (req, res) => {
     res.render('models.ejs', {userName: req.session.userName, curPage: "models"})
 })
 
+app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'), (req, res) => {
+    const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
+    const destinationPath = path.join(__dirname, 'upload', 'convert' + req.file.filename)
+    const uploadScript = path.join(__dirname, 'utilities', 'unpack-model.ps1')
+    const prefix = xss(req.body.name) + '-'
+    const userModelDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}), myServer.config.DIR_MODELS, "objects" )
 
+    fs.renameSync(uploadedFile, uploadedFile + '.zip')
+    const zipFile = uploadedFile + '.zip'
+
+    const { exec } = require('child_process')
+    exec(`& "${uploadScript}" -File "${zipFile}" -Destination "${destinationPath }" -FinalDestination "${userModelDir}" -Prefix ${prefix}`, {'shell':'powershell.exe'}, (error, stdout, stderr) => {
+        if(error) { console.log(error, stdout, stderr) }
+        fs.rm(zipFile, (err) => {
+            if (err) { return console.error(err) }  
+        })
+        fs.rm(destinationPath, {recursive: true}, (err) => {
+            if (err) { return console.error(err) }  
+        })  
+    })
+
+    res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
+})
 
 app.get('/login', (req, res) => {
     const error = xss(req.query.error)
