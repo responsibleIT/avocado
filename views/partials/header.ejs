@@ -1,20 +1,17 @@
 <header>
-    <div>
-        <div class="utilitynav">
-            <img src="/image/logo.svg" alt="Amsterdam University of Applied Sciences, Responsible IT Research Group" class="logo">
-            <% if(userName) { %>
-                <p>Welkom <%= userName %> - <a href="/logout">Logout</a></p>
-            <% } else { %> 
-                <p><a href="/login">Login</a></p>
-            <% } %> 
-        </div>
-        <nav>
-            <ul>
-                <li><a href="/" <% if(curPage == "detect") { %> class="active" <% } %> >Run Detection</a></li>
-                <li><a href="/config" <% if(curPage == "config") { %> class="active" <% } %> >Detection Rules</a></li>
-                <li><a href="/models" <% if(curPage == "models") { %> class="active" <% } %> >AI Models</a></li>
-            </ul>
-        </nav>
+    <div class="utilitynav">
+        <img src="/image/logo.svg" alt="Amsterdam University of Applied Sciences, Responsible IT Research Group" class="logo">
+        <% if(userName) { %>
+            <p>Welkom <%= userName %> - <a href="/logout">Logout</a></p>
+        <% } else { %> 
+            <p><a href="/login">Login</a></p>
+        <% } %> 
     </div>
-    <img src="/image/avocado.png" alt="illustration of an avocado">
+    <nav>
+        <ul>
+            <li><a href="/" <% if(curPage == "detect") { %> class="active" <% } %> >Run Detection</a></li>
+            <li><a href="/config" <% if(curPage == "config") { %> class="active" <% } %> >Detection Rules</a></li>
+            <li><a href="/models" <% if(curPage == "models") { %> class="active" <% } %> >AI Models</a></li>
+        </ul>
+    </nav>
 </header>
