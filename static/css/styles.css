@@ -1,3 +1,4 @@
+
 /* page styles */
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
@@ -74,7 +75,6 @@ a:hover {
 }
 
 
-
 /* header styles */
 .utilitynav {
   display: flex;
@@ -125,6 +125,17 @@ nav a.active {
 }
 
 
+
+/* login styles */
+.login {
+  display: flex;
+  align-items: center;
+  gap: 6rem;
+}
+
+.login img {
+  width: 7.5rem;
+}
 
 /* form styles */
 label {
@@ -255,4 +266,3 @@ canvas {
   font-size: 1.1rem;
   min-height: 6rem;
 }
-

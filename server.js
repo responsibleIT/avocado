@@ -1,8 +1,7 @@
 // Add info from .env file to process.env
 require('dotenv').config() 
 
-// get user accounts and server configuration
-const users = require('./accounts.json') 
+// get server configuration
 const myServer = require('./serverconfig.json')
 
 // Initialise Express webserver
@@ -33,6 +32,29 @@ app
   .use(express.static(myServer.config.DIR_STATIC))  // Allow server to serve static content such as images, stylesheets, fonts or frontend js from the directory named static
   .set('view engine', 'ejs')                    // Set EJS to be our templating engine
 //   .set('views', 'views')                     // And tell it the views can be found in the directory named views
+
+// Use MongoDB
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+// Construct URL used to connect to database from info in the .env file
+const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASS}@${process.env.DB_HOST}/?retryWrites=true&w=majority`
+// Create a MongoClient
+const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+})
+
+// Try to open a database connection
+client.connect()
+  .then(() => {
+    console.log('Database connection established')
+  })
+  .catch((err) => {
+    console.log(`Database connection error - ${err}`)
+    console.log(`For uri - ${uri}`)
+  })
 
 // middleware to test if authenticated
 function isAuthenticated (req, res, next) {
@@ -66,6 +88,18 @@ function initUserDir (userDir) {
 
         console.log('New user drectories created: ' + userDir )
     })
+}
+
+function getTimestamp () {
+    const now = new Date()
+    const dd = String(now.getDate()).padStart(2, '0')
+    const mm = String(now.getMonth() + 1).padStart(2, '0') //January is 0!
+    const yyyy = now.getFullYear()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const ms = String(now.getMinutes()).padStart(2, '0')
+    
+    return dd + '-' + mm + '-' + yyyy + '_' + hh + ms
+
 }
 
 // function convertLabelFile(labels) {
@@ -129,13 +163,12 @@ app.get('/config', isAuthenticated, (req, res) => {
         config: configTXT,
         configURL: configURL,
         detectionType: config.detectionType,
-        // objectLabels: objectLabelsTXT,
-        // gestureLabels: gestureLabelsTXT,
         currentModel: config.modelPath,
         nr: config.nr,
         confidence: config.confidence,
         objectModels: objectModels,
         gestureModels: gestureModels,
+        timestamp: getTimestamp(),
         curPage: "config"
     })
 })
@@ -154,10 +187,13 @@ app.post('/config', isAuthenticated, (req, res) => {
 
 app.get('/config/restore', isAuthenticated, (req, res) => {
     const configURL = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + myServer.config.DIR_CONFIG + '/' + 'config.json'
+    const saved = xss(req.query.saved)
 
-    res.render('configrestore.ejs', {
+    res.render('config-restore.ejs', {
+        saved: saved, 
         userName: req.session.userName,
         configURL: configURL,
+        timestamp: getTimestamp(),
         curPage: "config"
     })
 })
@@ -165,17 +201,51 @@ app.get('/config/restore', isAuthenticated, (req, res) => {
 app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, res) => {
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
+    const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
 
-    // backup current config and copy uploaded config to user dir
-    fs.copyFileSync(configFile, configFile + '.bak')   
-    fs.copyFileSync(path.join(__dirname, 'upload', req.file.filename), configFile)   
-    fs.rmSync(path.join(__dirname, 'upload', req.file.filename) )   
+    // check if uploaded file is valid JSON
+    const configFileContents = fs.readFileSync(uploadedFile, 'utf8')
+    try {
+        JSON.parse(configFileContents)
 
-    res.redirect("/config?saved=ok")
+        // backup current config and copy uploaded config to user dir
+        fs.renameSync(configFile, configFile + '.bak')   
+        fs.copyFileSync(uploadedFile, configFile)   
+        fs.rmSync(uploadedFile)   
+
+        res.redirect("/config?saved=ok")
+    } catch (error) {
+        fs.rmSync(uploadedFile)  
+        res.redirect("/config/restore?saved=error")
+    }
 })
 
 app.get('/models', isAuthenticated, (req, res) => {
     res.render('models.ejs', {userName: req.session.userName, curPage: "models"})
+})
+
+app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'), (req, res) => {
+    const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
+    const destinationPath = path.join(__dirname, 'upload', 'convert' + req.file.filename)
+    const uploadScript = path.join(__dirname, 'utilities', 'unpack-model.ps1')
+    const prefix = xss(req.body.name) + '-'
+    const userModelDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}), myServer.config.DIR_MODELS, "objects" )
+
+    fs.renameSync(uploadedFile, uploadedFile + '.zip')
+    const zipFile = uploadedFile + '.zip'
+
+    const { exec } = require('child_process')
+    exec(`& "${uploadScript}" -File "${zipFile}" -Destination "${destinationPath }" -FinalDestination "${userModelDir}" -Prefix ${prefix}`, {'shell':'powershell.exe'}, (error, stdout, stderr) => {
+        if(error) { console.log(error, stdout, stderr) }
+        fs.rm(zipFile, (err) => {
+            if (err) { return console.error(err) }  
+        })
+        fs.rm(destinationPath, {recursive: true}, (err) => {
+            if (err) { return console.error(err) }  
+        })  
+    })
+
+    res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
 })
 
 app.get('/login', (req, res) => {
@@ -184,10 +254,11 @@ app.get('/login', (req, res) => {
 })
   
 app.post('/login', async (req, res) => {
-    const myUserName = xss(req.body.name.toLowerCase())
+    const userName = xss(req.body.name)
+    const collection = client.db(process.env.DB_NAME).collection('users')
+    const myUser = await collection.findOne({ name: { $regex: new RegExp(userName, 'i') } })
 
-    const myUser = users.users.find(x => x.name.toLowerCase() === myUserName)
-    if (myUser && myUser.password === xss(req.body.password)) {
+    if (myUser && myUser.password === xss(req.body.password) && myUser.active) {
 
         // check if a directory for this user's data already exists, otherwise create it and it's subdirectories
         const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(myUser.name, {lower: true}) )
