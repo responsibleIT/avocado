@@ -1,8 +1,7 @@
 // Add info from .env file to process.env
 require('dotenv').config() 
 
-// get user accounts and server configuration
-const users = require('./accounts.json') 
+// get server configuration
 const myServer = require('./serverconfig.json')
 
 // Initialise Express webserver
@@ -33,6 +32,29 @@ app
   .use(express.static(myServer.config.DIR_STATIC))  // Allow server to serve static content such as images, stylesheets, fonts or frontend js from the directory named static
   .set('view engine', 'ejs')                    // Set EJS to be our templating engine
 //   .set('views', 'views')                     // And tell it the views can be found in the directory named views
+
+// Use MongoDB
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+// Construct URL used to connect to database from info in the .env file
+const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASS}@${process.env.DB_HOST}/?retryWrites=true&w=majority`
+// Create a MongoClient
+const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    }
+})
+
+// Try to open a database connection
+client.connect()
+  .then(() => {
+    console.log('Database connection established')
+  })
+  .catch((err) => {
+    console.log(`Database connection error - ${err}`)
+    console.log(`For uri - ${uri}`)
+  })
 
 // middleware to test if authenticated
 function isAuthenticated (req, res, next) {
@@ -232,10 +254,11 @@ app.get('/login', (req, res) => {
 })
   
 app.post('/login', async (req, res) => {
-    const myUserName = xss(req.body.name.toLowerCase())
+    const userName = xss(req.body.name)
+    const collection = client.db(process.env.DB_NAME).collection('users')
+    const myUser = await collection.findOne({ name: { $regex: new RegExp(userName, 'i') } })
 
-    const myUser = users.users.find(x => x.name.toLowerCase() === myUserName)
-    if (myUser && myUser.password === xss(req.body.password)) {
+    if (myUser && myUser.password === xss(req.body.password) && myUser.active) {
 
         // check if a directory for this user's data already exists, otherwise create it and it's subdirectories
         const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(myUser.name, {lower: true}) )
