@@ -25,6 +25,9 @@
     </ol>
     <p class="message">Sorry, this doesn't work just yet!</p>
     <form action="/models/upload/objects-tm" method="post" enctype="multipart/form-data">
+        <% if(saved == 'error'){ %>
+            <p class="message">Couldn't read your zip file, please try another file.</p>
+        <% } %> 
         <p>
             <label for="modelfile">TF Lite Model file (.zip)</label>
             <input name="modelfile" id="modelfile" type="file" required accept=".zip">

@@ -19,6 +19,8 @@ const fs = require('fs')
 const slugify = require('slugify')
 const multer = require('multer')
 const upload = multer({ dest: 'upload/' })
+const extract = require('extract-zip')
+const {Downloader} = require("nodejs-file-downloader")
 
 let session = require('express-session')
 app.use(session({
@@ -221,31 +223,91 @@ app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, 
 })
 
 app.get('/models', isAuthenticated, (req, res) => {
-    res.render('models.ejs', {userName: req.session.userName, curPage: "models"})
+    const saved = xss(req.query.saved)
+    res.render('models.ejs', {saved: saved, userName: req.session.userName, curPage: "models"})
 })
 
-app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'), (req, res) => {
+app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'), async (req, res) => {
     const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
-    const destinationPath = path.join(__dirname, 'upload', 'convert' + req.file.filename)
-    const uploadScript = path.join(__dirname, 'utilities', 'unpack-model.ps1')
-    const prefix = xss(req.body.name) + '-'
+    const destinationPath = path.join(__dirname, myServer.config.DIR_STATIC, 'convert', req.file.filename)
     const userModelDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}), myServer.config.DIR_MODELS, "objects" )
 
+    let labelURL
+    let modelURL
+    let modelFileName
+    const prefix = xss(req.body.name) + '-'
+    
     fs.renameSync(uploadedFile, uploadedFile + '.zip')
     const zipFile = uploadedFile + '.zip'
 
-    const { exec } = require('child_process')
-    exec(`& "${uploadScript}" -File "${zipFile}" -Destination "${destinationPath }" -FinalDestination "${userModelDir}" -Prefix ${prefix}`, {'shell':'powershell.exe'}, (error, stdout, stderr) => {
-        if(error) { console.log(error, stdout, stderr) }
-        fs.rm(zipFile, (err) => {
-            if (err) { return console.error(err) }  
+    try {
+        await extract(zipFile, { 
+            dir: destinationPath, 
+            onEntry: (entry, zipfile) => {
+                if (entry.fileName == 'labels.txt') { labelURL = `${process.env.HOSTNAME}/convert/${req.file.filename}/${entry.fileName}` }
+                if (path.extname(entry.fileName) == '.tflite') {
+                    modelURL = `${process.env.HOSTNAME}/convert/${req.file.filename}/${entry.fileName}` 
+                    modelFileName = entry.fileName
+                }
+            } 
         })
-        fs.rm(destinationPath, {recursive: true}, (err) => {
-            if (err) { return console.error(err) }  
-        })  
+    } catch (err) {
+        console.error(err)
+    }
+
+    fs.rm(zipFile, (err) => {
+        if (err) { return console.error(err) }  
     })
 
-    res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
+    if (!modelURL || !labelURL) {
+        res.redirect("/models?saved=error")
+    } else {
+        // console.log('Extraction complete', labelURL, modelURL)
+        res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
+
+        const url = process.env.UTILS_HOSTNAME + "/add-metadata/image-segmentation"
+        const options = {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json;charset=UTF-8",
+          },
+          body: JSON.stringify({
+            labelFile: labelURL,
+            modelFile: modelURL,
+            modelFileName: modelFileName,
+            newModelFileName: prefix + modelFileName
+          })
+        }
+
+        fetch(url, options)
+          .then((response) => response.json())
+          .then(async (data) => {
+            // console.log(data.url)
+            fs.copyFileSync( path.join(destinationPath, 'labels.txt'), path.join(userModelDir, prefix + 'labels.txt'))
+
+            const downloader = new Downloader({
+                url: data.url,
+                directory: userModelDir
+              })
+
+              try {
+                await downloader.download()
+                console.log("Downloaded: "+ data.url) 
+              } catch (err) {
+                console.error("Download from Avocado Utils failed\n", err)
+              }
+
+            fs.rm(destinationPath, {recursive: true}, (err) => {
+                if (err) { return console.error(err) }  
+            }) 
+          })
+          .catch (err => {
+            console.error("Error processing response from Avocado Utils\n", err)
+          })
+
+    }
+
 })
 
 app.get('/login', (req, res) => {
