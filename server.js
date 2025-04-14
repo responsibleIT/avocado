@@ -58,12 +58,13 @@ client.connect()
     console.log(`For uri - ${uri}`)
   })
 
-// middleware to test if authenticated
+// middleware to test if user is logged in
 function isAuthenticated (req, res, next) {
     if (req.session.userName) next()
     else res.redirect('/login')
 }
 
+// create a user directory if it doesn't already exist
 function initUserDir (userDir) {
     fs.mkdir(userDir, (err) => {
         if (err) { 
@@ -92,6 +93,7 @@ function initUserDir (userDir) {
     })
 }
 
+// get the current date and time to create a unique filename
 function getTimestamp () {
     const now = new Date()
     const dd = String(now.getDate()).padStart(2, '0')
@@ -104,19 +106,7 @@ function getTimestamp () {
 
 }
 
-// function convertLabelFile(labels) {
-//     let labelString = '['
-//     const allLabels = labels.split("\n")
-//     for (l of allLabels) {
-//         labelString += "'" + l.replace("'", "\\'") + "',"
-//     }
-//     labelString = labelString.substring(0, labelString.length - 1);
-//     labelString += ']'
-
-//     return labelString
-// }
-
-// routes
+// the homepage starts object detection or gesture detection, depending on the current detection type in the user's configuration file
 app.get('/', isAuthenticated, (req, res) => {
     const userPath = './' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/'
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
@@ -175,6 +165,7 @@ app.get('/config', isAuthenticated, (req, res) => {
     })
 })
 
+// save the config file
 app.post('/config', isAuthenticated, (req, res) => {
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
@@ -187,6 +178,7 @@ app.post('/config', isAuthenticated, (req, res) => {
     }
 })
 
+// form for uploading a previous backup of the user's config file
 app.get('/config/restore', isAuthenticated, (req, res) => {
     const configURL = '/' + myServer.config.DIR_USERS + '/' + slugify(req.session.userName, {lower: true}) + '/' + myServer.config.DIR_CONFIG + '/' + 'config.json'
     const saved = xss(req.query.saved)
@@ -200,6 +192,7 @@ app.get('/config/restore', isAuthenticated, (req, res) => {
     })
 })
 
+// restore a previous backup of the user's config file
 app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, res) => {
     const userDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}) )
     const configFile = path.join(userDir, myServer.config.DIR_CONFIG, 'config.json')
@@ -222,11 +215,13 @@ app.post('/config/restore', isAuthenticated, upload.single('configfile'), (req, 
     }
 })
 
+// page for uploading new detection models
 app.get('/models', isAuthenticated, (req, res) => {
     const saved = xss(req.query.saved)
     res.render('models.ejs', {saved: saved, userName: req.session.userName, curPage: "models"})
 })
 
+// uploading object detection models, exported from teachable machine
 app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'), async (req, res) => {
     const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
     const destinationPath = path.join(__dirname, myServer.config.DIR_STATIC, 'convert', req.file.filename)
@@ -237,10 +232,12 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
     let modelFileName
     const prefix = xss(req.body.name) + '-'
     
+    // add .zip to the filename, so it can be extracted
     fs.renameSync(uploadedFile, uploadedFile + '.zip')
     const zipFile = uploadedFile + '.zip'
 
     try {
+        // extract the zipfile and locate the labels.txt and .tflite model file that should be inside the zip
         await extract(zipFile, { 
             dir: destinationPath, 
             onEntry: (entry, zipfile) => {
@@ -255,16 +252,18 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
         console.error(err)
     }
 
+    // remove the zipfile
     fs.rm(zipFile, (err) => {
         if (err) { return console.error(err) }  
     })
 
+    // check if we found the labels.txt and .tflite model file that we need
     if (!modelURL || !labelURL) {
         res.redirect("/models?saved=error")
     } else {
-        // console.log('Extraction complete', labelURL, modelURL)
         res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
 
+        // send a HTTP request to the avocado-utils to convert the modelfile into usable format
         const url = process.env.UTILS_HOSTNAME + "/add-metadata/image-segmentation"
         const options = {
           method: "POST",
@@ -283,9 +282,10 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
         fetch(url, options)
           .then((response) => response.json())
           .then(async (data) => {
-            // console.log(data.url)
-            fs.copyFileSync( path.join(destinationPath, 'labels.txt'), path.join(userModelDir, prefix + 'labels.txt'))
+            // copy the labels.txt file to the user directory
+            fs.copyFileSync( path.join(destinationPath, 'labels.txt'), path.join(userModelDir, prefix + modelFileName + '.labels.txt'))
 
+            // download the converted modelfile from avocado-utils to the user directory
             const downloader = new Downloader({
                 url: data.url,
                 directory: userModelDir
@@ -298,6 +298,7 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
                 console.error("Download from Avocado Utils failed\n", err)
               }
 
+            // clean up the old files
             fs.rm(destinationPath, {recursive: true}, (err) => {
                 if (err) { return console.error(err) }  
             }) 
