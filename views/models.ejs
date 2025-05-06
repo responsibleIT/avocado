@@ -23,20 +23,21 @@
         <li>Export your model in <strong>Tensorflow Lite</strong> format (also known as LiteRT)</li>
         <li>Teachable Machine will provide you with a ZIP file to download, which you can then upload on this page.</li>
     </ol>
-    <form action="/models/upload/objects-tm" method="post" enctype="multipart/form-data">
-        <% if(saved == 'objecterror'){ %>
-            <p class="message">Couldn't process your zip file. Make sure your zip contains a labels.txt file and a .tflite model</p>
-        <% } %> 
-        <p>
-            <label for="modelfile">TF Lite Model file (.zip)</label>
-            <input name="modelfile" id="modelfile" type="file" required accept=".zip">
-        </p>
-        <p>
-            <label for="name">Model name</label>
-            <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
-        </p>
+    <% if(saved == 'objecterror'){ %>
+        <p class="message">Couldn't process your zip file. Make sure your zip contains a labels.txt file and a .tflite model</p>
+    <% } %> 
+    <form class="columnform" action="/models/upload/objects-tm" method="post" enctype="multipart/form-data">
+        <div>
+            <p>
+                <label for="modelfile">TF Lite Model file (.zip)</label>
+                <input name="modelfile" id="modelfile" type="file" required accept=".zip">
+            </p>
+            <p>
+                <label for="name">Model name</label>
+                <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
+            </p>
+        </div>
         <input class="primarybutton" type="submit" value="Upload Model">
-
     </form>
 
     <h2>Gesture recognition models</h2>
@@ -48,20 +49,21 @@
         <li>Once you're done, create a single zipfile containing all of these directories and upload it here.</li>
         <li>You can download an <a href="/downloads/rps_data_sample.zip">example</a> of what your zipfile should look like.</li>
     </ol>
-    <form action="/models/upload/gestures" method="post" enctype="multipart/form-data">
-        <% if(saved == 'gestureerror'){ %>
-            <p class="message">Couldn't process your zip file. Make sure your zip contains more than one directory and at least a directory named <em>none</em>.</p>
-        <% } %> 
-        <p>
-            <label for="zipfile">Zipfile containing directories with images (.zip)</label>
-            <input name="zipfile" id="zipfile" type="file" required accept=".zip">
-        </p>
-        <p>
-            <label for="name">Model name</label>
-            <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
-        </p>
+    <% if(saved == 'gestureerror'){ %>
+        <p class="message">Couldn't process your zip file. Make sure your zip contains more than one directory and at least a directory named <em>none</em>.</p>
+    <% } %> 
+    <form class="columnform" action="/models/upload/gestures" method="post" enctype="multipart/form-data">
+        <div>
+            <p>
+                <label for="zipfile">Zipfile containing directories with images (.zip)</label>
+                <input name="zipfile" id="zipfile" type="file" required accept=".zip">
+            </p>
+            <p>
+                <label for="name">Model name</label>
+                <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
+            </p>
+        </div>  
         <input class="primarybutton" type="submit" value="Upload Model">
-
     </form>
 </main>
 </body>
