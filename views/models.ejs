@@ -24,12 +24,37 @@
         <li>Teachable Machine will provide you with a ZIP file to download, which you can then upload on this page.</li>
     </ol>
     <form action="/models/upload/objects-tm" method="post" enctype="multipart/form-data">
-        <% if(saved == 'error'){ %>
-            <p class="message">Couldn't read your zip file, please try another file.</p>
+        <% if(saved == 'objecterror'){ %>
+            <p class="message">Couldn't process your zip file. Make sure your zip contains a labels.txt file and a .tflite model</p>
         <% } %> 
         <p>
             <label for="modelfile">TF Lite Model file (.zip)</label>
             <input name="modelfile" id="modelfile" type="file" required accept=".zip">
+        </p>
+        <p>
+            <label for="name">Model name</label>
+            <input id="name" name="name" type="text" size="30" required placeholder="Choose a name for your model">
+        </p>
+        <input class="primarybutton" type="submit" value="Upload Model">
+
+    </form>
+
+    <h2>Gesture recognition models</h2>
+    <ol>
+        <li>To train your own gesture recognition model, you will first need lots of images for each gesture you want to recognise.</li>
+        <li>You can use the <a href="https://www.kaggle.com/datasets/innominate817/hagrid-sample-30k-384p" target="_blank">HaGRID dataset</a> as a source for images.</li>
+        <li>On your computer, make seperate directories for each gesture you want to recognise. The name of the directory must be the name of the gesture. Fill it with appropriate example images for that gesture.</li>
+        <li>Also make a directory named 'none' and fill it with images of gestures that aren't classified as one of the other gestures</li>
+        <li>Once you're done, create a single zipfile containing all of these directories and upload it here.</li>
+        <li>You can download an <a href="/downloads/rps_data_sample.zip">example</a> of what your zipfile should look like.</li>
+    </ol>
+    <form action="/models/upload/gestures" method="post" enctype="multipart/form-data">
+        <% if(saved == 'gestureerror'){ %>
+            <p class="message">Couldn't process your zip file. Make sure your zip contains more than one directory and at least a directory named <em>none</em>.</p>
+        <% } %> 
+        <p>
+            <label for="zipfile">Zipfile containing directories with images (.zip)</label>
+            <input name="zipfile" id="zipfile" type="file" required accept=".zip">
         </p>
         <p>
             <label for="name">Model name</label>

@@ -259,7 +259,7 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
 
     // check if we found the labels.txt and .tflite model file that we need
     if (!modelURL || !labelURL) {
-        res.redirect("/models?saved=error")
+        res.redirect("/models?saved=objecterror")
     } else {
         res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
 
@@ -307,6 +307,88 @@ app.post('/models/upload/objects-tm', isAuthenticated, upload.single('modelfile'
             console.error("Error processing response from Avocado Utils\n", err)
           })
 
+    }
+
+})
+
+// route for uploading gesture recognition data to train model
+app.post('/models/upload/gestures', isAuthenticated, upload.single('zipfile'), async (req, res) => {
+    const uploadedFile = path.join(__dirname, 'upload', req.file.filename)
+    const newModelFileName = xss(req.body.name) + '-' + 'gesture_recognizer.task'
+    const destinationPath = path.join(__dirname, myServer.config.DIR_STATIC, 'convert', req.file.filename)
+    const userModelDir = path.join(__dirname, myServer.config.DIR_STATIC, myServer.config.DIR_USERS, slugify(req.session.userName, {lower: true}), myServer.config.DIR_MODELS, "gestures" )
+    
+    // add .zip to the filename, so it can be extracted and move it to the convert folder in static so it can be accessed via HTTP
+    const zipFile = destinationPath + '.zip'
+    fs.renameSync(uploadedFile, zipFile)
+    const zipFileURL = `${process.env.HOSTNAME}/convert/${req.file.filename}.zip` 
+
+    // extract zipFile so we can check if the expected directories are inside
+    try {
+        await extract(zipFile, { 
+            dir: destinationPath, 
+        })
+    } catch (err) {
+        console.error(err)
+    }
+
+    const directoryList = fs.readdirSync(destinationPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name)
+
+    // clean up the extracted files
+    fs.rm(destinationPath, {recursive: true}, (err) => {
+        if (err) { return console.error(err) }  
+    }) 
+
+    // check if there are at least two or more directories in the zip, one of them named none
+    if (directoryList.length < 2 ||  directoryList.indexOf("none") == -1) {
+        res.redirect("/models?saved=gestureerror")
+    } else {
+        res.render('model-processed.ejs', {userName: req.session.userName, curPage: "models"})
+
+        // send a HTTP request to the avocado-utils to train a model from the data in the zipfile
+        const url = process.env.UTILS_HOSTNAME + "/train/gesture-recognition"
+        const options = {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json;charset=UTF-8",
+            },
+            body: JSON.stringify({
+                zipFile: zipFileURL,
+                newModelFileName: newModelFileName
+            })
+        }
+
+        fetch(url, options)
+        .then((response) => response.json())
+        .then(async (data) => {
+             // download the trained modelfile from avocado-utils to the user directory
+             const downloader = new Downloader({
+                url: data.url,
+                directory: userModelDir
+              })
+
+              try {
+                await downloader.download()
+                console.log("Downloaded: "+ data.url) 
+              } catch (err) {
+                console.error("Download from Avocado Utils failed\n", err)
+              }
+
+            // from the directories names we found earlier in the uploaded zip, create a labels.txt file in the user's gesture model directory
+            fs.writeFileSync(path.join(userModelDir, newModelFileName + '.labels.txt'), directoryList.join('\n'))
+
+            // delete the original uploaded zipfile
+            fs.rm(zipFile, (err) => {
+                if (err) { return console.error(err) }  
+            })  
+
+        })
+        .catch (err => {
+            console.error("Error processing response from Avocado Utils\n", err)
+        })
     }
 
 })
