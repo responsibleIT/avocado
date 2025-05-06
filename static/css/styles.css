@@ -138,6 +138,16 @@ nav a.active {
 }
 
 /* form styles */
+.columnform {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.columnform div {
+  width: 25rem;
+}
+
 label {
   display: block;
   margin: 0.2rem 0rem;
