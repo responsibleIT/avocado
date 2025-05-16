@@ -19,7 +19,7 @@ const objectModel = document.getElementById("objectModel")
 const objectNr = document.getElementById("objectNr")
 const objectConfidence = document.getElementById("objectConfidence")
 
-
+// convert the labels that the model can recognise from the labels.txt file into an array
 function convertLabelFile(labels) {
     let labelArray = []
     const allLabels = labels.split("\n")
@@ -30,10 +30,12 @@ function convertLabelFile(labels) {
     return labelArray
 }
 
+// add a single rule to the form
 function addRule(rule) {
     const newRule = document.createElement('p')
     newRule.classList.add("rows")
 
+    // create a select box and fill it with the things the model can recognise from the labels.txt
     const newLabel = document.createElement('select')
     newLabel.setAttribute("data-name", "label")
     let labels
@@ -55,6 +57,7 @@ function addRule(rule) {
     }
     newRule.appendChild(newLabel)
 
+    // create a select box for the type of output we want, currently text or a color
     const newOutputType = document.createElement('select')
     newOutputType .setAttribute("data-name", "outputType")
     for (const outputType of outputTypes) {
@@ -68,6 +71,7 @@ function addRule(rule) {
 
     newRule.appendChild(newOutputType)
 
+    // if we want to output text, add a textbox. For color, add a colorpicker element
     const newOutput = document.createElement('input')
     newOutput .setAttribute("data-name", "output")
     if (rule.outputType == 'text') {
@@ -81,6 +85,7 @@ function addRule(rule) {
 
     newRule.appendChild(newOutput)
 
+    // if the output type changes from text to color or vice versa, we need to update the element holding the actual text or color as well
     newOutputType.addEventListener("change", (event) => {
         if (event.target.value == 'text') {
             newOutput.setAttribute("type", "text" )
@@ -92,6 +97,7 @@ function addRule(rule) {
         }
     })
 
+    // add a delete button for removing the rule
     const newDelete = document.createElement('button')
     newDelete.innerText = 'Delete'
     newDelete.setAttribute("type", "button" )
@@ -101,12 +107,17 @@ function addRule(rule) {
     formContents.appendChild(newRule)
 }
 
+// create the form
 async function buildForm() {
+    // hide the form while we build it
     formContents.classList.add('hidden')
     formButtons.classList.add('hidden')
       
     formContents.innerHTML = "<h2>Rules for detection matching</h2>"
 
+    // read the labels.txt file for the currently selected model
+    // show the section for either object or gesture detection
+    // and add the rules that are currently in the user's config.json file
     if (selectGestureDetection.checked) {
         config.detectionType = 'gestures'
         labelFile = userPath + '/models/gestures/' +  gestureModel.value + '.labels.txt'
@@ -137,9 +148,11 @@ async function buildForm() {
     formButtons.classList.remove('hidden')
 }
 
+// convert the rules from the form to JSON format on submitting
 function addConfig(Event) {
     const iGotNewRules = []
 
+    // iterate over the rules in the form 
     for (const child of formContents.children) {
         const newRule = {}
         for (const grandchild of child.children) {
@@ -168,6 +181,7 @@ function addConfig(Event) {
 
 }
 
+// add a new empty rule at the bottom of the form
 function addEmptyRule() {
     rule = {
         "label": "",
@@ -177,10 +191,14 @@ function addEmptyRule() {
     addRule(rule)
 }
 
+// dynamically create the form when the page is loaded
 window.addEventListener("load", buildForm)
+
+// update the form when we choose a new type of detection or a different model
 selectGestureDetection.addEventListener("change", buildForm)
 selectObjectDetection.addEventListener("change", buildForm)
 objectModel.addEventListener("change", buildForm)
 gestureModel.addEventListener("change", buildForm)
+
 myForm.addEventListener("submit", addConfig)
 addRuleButton.addEventListener("click", addEmptyRule)

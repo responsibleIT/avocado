@@ -150,8 +150,11 @@ async function predictWebcam() {
             // }
 
             // gestureOutput.innerText = `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore} %\n Handedness: ${realHandedness}`;
+
+            // list the gestures that were detected
             gestureOutput.innerText += `Gesture: ${categoryName}, confidence: ${categoryScore} %\n`;
 
+                  // check if any of the rules for gesturet detection were matched. If so, add the output text and/or color
             for (const rule of config.rules.gestures) {
                 if (rule.label == categoryName) {
                     if (rule.outputType == 'text') {

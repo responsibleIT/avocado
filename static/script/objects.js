@@ -81,6 +81,8 @@ async function predictWebcam() {
 
     for (const category of classifications[0].categories) {
         // webcamPredictions.className = "webcamPredictions";
+
+        // list the objects that were detected
         webcamPredictions.innerText +=
             "Classification: " +
                 category.categoryName +
@@ -88,6 +90,7 @@ async function predictWebcam() {
                 Math.round(parseFloat(category.score) * 100) +
                 "%\n";
 
+        // check if any of the rules for object detection were matched. If so, add the output text and/or color
         for (const rule of config.rules.objects) {
             if (rule.label == category.categoryName) {
                 if (rule.outputType == 'text') {
